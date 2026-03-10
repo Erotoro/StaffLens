@@ -1,0 +1,13 @@
+.gradle/
+build/
+bin/
+.vscode/
+.idea/
+out/
+*.class
+*.log
+*.db
+*.sqlite
+*.iml
+Thumbs.db
+Desktop.ini

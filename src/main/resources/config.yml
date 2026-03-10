@@ -1,0 +1,30 @@
+locale: en
+
+database:
+  # sqlite or mysql
+  type: sqlite
+  mysql:
+    host: localhost
+    port: 3306
+    database: minecraft
+    username: root
+    password: ""
+
+log:
+  retention-days: 90
+  page-size: 15
+
+notify:
+  critical-actions:
+    - OP_GIVE
+    - PERMISSION_ADD
+    - GROUP_ADD
+
+integrations:
+  LiteBans: true
+  BanManager: true
+  AdvancedBan: true
+  Essentials: true
+  CMI: true
+  LuckPerms: true
+  Vanilla: true

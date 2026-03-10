@@ -1,0 +1,21 @@
+name: StaffLens
+version: 1.0.0
+main: dev.stafflens.StaffLensPlugin
+api-version: '1.21'
+author: Erotoro
+website: https://stafflens.dev
+softdepend: [LiteBans, BanManager, AdvancedBan, Essentials, CMI, LuckPerms]
+permissions:
+  stafflens.use:
+    default: op
+  stafflens.admin:
+    default: op
+  stafflens.export:
+    default: op
+  stafflens.notify:
+    default: op
+commands:
+  stafflens:
+    description: Main command for audit logs
+    aliases: [sl]
+    usage: /stafflens <subcommand>
