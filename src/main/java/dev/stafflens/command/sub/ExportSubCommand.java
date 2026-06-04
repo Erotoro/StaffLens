@@ -31,11 +31,12 @@ public class ExportSubCommand implements StaffLensCommand.SubCommand {
     }
 
     @Override
+    public String permission() {
+        return "stafflens.export";
+    }
+
+    @Override
     public void execute(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("stafflens.export")) {
-            MessageUtil.sendMessage(sender, plugin, "no-permission");
-            return;
-        }
         if (args.length < 1) {
             MessageUtil.sendMessage(sender, plugin, "usage-export");
             return;
@@ -83,11 +84,14 @@ public class ExportSubCommand implements StaffLensCommand.SubCommand {
                 writer.write("-------------------------------------------------\n");
 
                 for (AuditEntry e : entries) {
-                    writer.write(String.format("[%s] Action: %s | Target: %s | Reason: %s | Details: %s%n",
+                    writer.write(String.format("[%s] Action: %s | Target: %s | Reason: %s | Location: %s | Server: %s | Flagged: %s | Details: %s%n",
                             TimeUtil.format(e.timestamp()),
                             safeValue(e.action().displayName()),
                             safeValue(e.targetName()),
                             safeValue(e.reason()),
+                            formatLocation(e),
+                            safeValue(e.serverName()),
+                            e.flagged() ? "yes" : "no",
                             safeValue(e.details())
                     ));
                 }
@@ -106,5 +110,12 @@ public class ExportSubCommand implements StaffLensCommand.SubCommand {
 
     private String safeValue(String value) {
         return value == null ? "" : value.replace('\n', ' ').replace('\r', ' ');
+    }
+
+    private String formatLocation(AuditEntry entry) {
+        if (!entry.hasLocation()) {
+            return "";
+        }
+        return entry.world() + " " + entry.x() + "," + entry.y() + "," + entry.z();
     }
 }

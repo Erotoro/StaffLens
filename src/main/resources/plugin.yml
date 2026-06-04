@@ -1,18 +1,26 @@
 name: StaffLens
-version: 1.0.0
+version: 1.1.0
 main: dev.stafflens.StaffLensPlugin
 api-version: '1.21'
+folia-supported: true
 author: Erotoro
 website: https://stafflens.dev
-softdepend: [LiteBans, BanManager, AdvancedBan, Essentials, CMI, LuckPerms]
+softdepend: [LiteBans, BanManager, AdvancedBan, Essentials, CMI, LuckPerms, SuperVanish, PremiumVanish, LibsDisguises]
 permissions:
   stafflens.use:
+    description: Access to viewing audit logs
     default: op
   stafflens.admin:
+    description: Access to reload and integrity verification
     default: op
   stafflens.export:
+    description: Access to exporting logs
     default: op
   stafflens.notify:
+    description: Receive in-game notifications for critical actions
+    default: op
+  stafflens.alerts:
+    description: Receive in-game alerts for detected anomalies
     default: op
 commands:
   stafflens:

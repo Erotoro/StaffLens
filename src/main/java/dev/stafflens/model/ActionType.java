@@ -38,6 +38,8 @@ public enum ActionType {
     FEED("Feed"),
     VANISH_ON("Enable Vanish"),
     VANISH_OFF("Disable Vanish"),
+    DISGUISE("Disguise"),
+    UNDISGUISE("Undisguise"),
     BACK("Back Teleport"),
     BROADCAST("Broadcast"),
     SUDO("Force Command"),

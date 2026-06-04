@@ -1,20 +1,20 @@
 package dev.stafflens.command.sub;
 
 import dev.stafflens.StaffLensPlugin;
-import dev.stafflens.command.StaffLensCommand;
-import dev.stafflens.model.AuditEntry;
+import dev.stafflens.command.CommandArgs;
+import dev.stafflens.model.AuditFilter;
 import dev.stafflens.util.MessageUtil;
-import dev.stafflens.util.SchedulerUtil;
 import dev.stafflens.util.TimeUtil;
 import org.bukkit.command.CommandSender;
 
-import java.util.List;
-
-public class SearchSubCommand implements StaffLensCommand.SubCommand {
-    private final StaffLensPlugin plugin;
+/**
+ * {@code /sl search <text> [page] [action:..] [time:..] [target:..] [flagged]} — free-text search
+ * across the journal, combinable with structured filters.
+ */
+public class SearchSubCommand extends PagedListSubCommand {
 
     public SearchSubCommand(StaffLensPlugin plugin) {
-        this.plugin = plugin;
+        super(plugin);
     }
 
     @Override
@@ -24,56 +24,26 @@ public class SearchSubCommand implements StaffLensCommand.SubCommand {
 
     @Override
     public void execute(CommandSender sender, String[] args) {
-        if (args.length < 1) {
+        CommandArgs parsed = CommandArgs.parse(args);
+        String text = parsed.joinedPositional();
+
+        if (text.isBlank() && !parsed.hasFilters()) {
             MessageUtil.sendMessage(sender, plugin, "usage-search");
             return;
         }
-        int page = parseTrailingPage(args);
-        int queryLength = isLastArgPage(args) ? args.length - 1 : args.length;
-        String query = String.join(" ", java.util.Arrays.copyOfRange(args, 0, queryLength));
 
-        plugin.getServer().getAsyncScheduler().runNow(plugin, task -> {
-            int limit = plugin.getConfig().getInt("log.page-size", 15);
-            int offset = (page - 1) * limit;
-            List<AuditEntry> entries = plugin.getDatabase().search(query, limit, offset);
-            int totalPages = Math.max(1, (int) Math.ceil(plugin.getDatabase().countSearch(query) / (double) limit));
-            SchedulerUtil.runSync(plugin, () -> {
-                if (entries.isEmpty()) {
-                    MessageUtil.sendMessage(sender, plugin, "no-data");
-                    return;
-                }
-
-                String safeQuery = MessageUtil.escapeMiniMessage(query);
-                sender.sendMessage(MessageUtil.parse("<gray>Search results for '<gold>" + safeQuery + "<gray>':"));
-                for (AuditEntry e : entries) {
-                    sender.sendMessage(MessageUtil.auditEntry(
-                            e,
-                            "<dark_gray>[" + TimeUtil.format(e.timestamp()) + "] <red>" + MessageUtil.escapeMiniMessage(e.staffName())
-                                    + " <gray>> <yellow>" + MessageUtil.escapeMiniMessage(e.action().displayName())
-                                    + " <gray>> <white>" + MessageUtil.escapeMiniMessage(e.targetName())
-                    ));
-                }
-                sender.sendMessage(MessageUtil.pageControls("/sl search " + query, page, totalPages));
-            });
-        });
-    }
-
-    private int parseTrailingPage(String[] args) {
-        if (!isLastArgPage(args)) {
-            return 1;
+        AuditFilter filter = parsed.filter();
+        if (!text.isBlank()) {
+            filter.text(text);
         }
-        return Math.max(1, Integer.parseInt(args[args.length - 1]));
-    }
 
-    private boolean isLastArgPage(String[] args) {
-        if (args.length < 2) {
-            return false;
-        }
-        try {
-            Integer.parseInt(args[args.length - 1]);
-            return true;
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
+        String label = text.isBlank() ? "filters" : text;
+        String header = "<gray>Search results for '<gold>" + MessageUtil.escapeMiniMessage(label) + "<gray>':";
+        renderFiltered(sender, header, "/sl search " + parsed.baseArgs(), parsed.page(), filter,
+                entry -> MessageUtil.flagPrefix(entry)
+                        + "<dark_gray>[" + TimeUtil.format(entry.timestamp()) + "] <red>"
+                        + MessageUtil.escapeMiniMessage(entry.staffName())
+                        + " <gray>> <yellow>" + MessageUtil.escapeMiniMessage(entry.action().displayName())
+                        + " <gray>> <white>" + MessageUtil.escapeMiniMessage(entry.targetName()));
     }
 }

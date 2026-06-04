@@ -1,4 +1,18 @@
+# ============================================================================
+#  StaffLens configuration
+#  Supports Minecraft 1.21 -> 26.1 on Paper / Spigot / Folia.
+# ============================================================================
+
+# Language file to use from the "locale" folder (en, ru, ua, or your own).
 locale: en
+
+# Logical name written to every entry. Useful on networks/proxies to tell which
+# server an action happened on. Leave empty to omit.
+server-name: ""
+
+# Anonymous usage statistics via bStats (https://bstats.org). You can also disable
+# all bStats globally in plugins/bStats/config.yml.
+metrics: true
 
 database:
   # sqlite or mysql
@@ -11,14 +25,67 @@ database:
     password: ""
 
 log:
+  # Entries older than this are deleted. Set to 0 to keep forever.
   retention-days: 90
+  # Page size for the listing commands.
   page-size: 15
+  # Re-run retention cleanup every N hours while the server runs (0 = only on start).
+  cleanup-interval-hours: 6
+
+tracking:
+  # Whose actions the built-in command tracker records:
+  #   permission - only players with the permission below (default; legacy behaviour)
+  #   all        - every player
+  mode: permission
+  permission: stafflens.admin
+  # Custom command -> action mappings. Evaluated only when the built-in parser does
+  # not recognise a command, so you can audit commands from ANY plugin without code.
+  # target-arg is the 1-based argument index naming the target (0 = the actor).
+  command-tracking:
+    # freeze:
+    #   action: JAIL
+    #   target-arg: 1
+    # customban:
+    #   action: BAN
+    #   target-arg: 1
 
 notify:
+  # Actions that trigger an in-game alert to holders of stafflens.notify
+  # (and a Discord message, if enabled).
   critical-actions:
     - OP_GIVE
     - PERMISSION_ADD
     - GROUP_ADD
+
+anomaly:
+  # Turn behavioural analysis on/off. Matches are flagged, alerted to holders of
+  # stafflens.alerts, logged, and (optionally) sent to Discord.
+  enabled: true
+  # Sensitive actions a staff member should never target themselves with.
+  self-target-actions:
+    - OP_GIVE
+    - PERMISSION_ADD
+    - GROUP_ADD
+    - GIVE_ITEM
+  # Flag a burst of punishments from a single staff member.
+  mass-punish:
+    enabled: true
+    threshold: 5
+    window-seconds: 60
+  # Flag repeated inventory/ender-chest inspections of the same target.
+  repeated-invsee:
+    enabled: true
+    threshold: 4
+    window-seconds: 120
+  # Flag giving/clearing items shortly after switching oneself to creative.
+  creative-then-give: true
+
+discord:
+  enabled: false
+  webhook-url: ""
+  username: StaffLens
+  send-critical: true
+  send-anomalies: true
 
 integrations:
   LiteBans: true
@@ -27,4 +94,6 @@ integrations:
   Essentials: true
   CMI: true
   LuckPerms: true
+  LibsDisguises: true
+  SuperVanish: true   # also covers PremiumVanish (shared API)
   Vanilla: true

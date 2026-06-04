@@ -5,6 +5,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 public class ConfigManager {
@@ -37,6 +40,20 @@ public class ConfigManager {
             }
         }
         messagesConfig = YamlConfiguration.loadConfiguration(messagesFile);
+        applyBundledDefaults(locale);
+    }
+
+    // Use the bundled locale as defaults so keys added in a new version still resolve
+    // even if the user keeps an older locale file on disk.
+    private void applyBundledDefaults(String locale) {
+        InputStream defaults = plugin.getResource("locale/" + locale + ".yml");
+        if (defaults == null) {
+            defaults = plugin.getResource("locale/en.yml");
+        }
+        if (defaults != null) {
+            messagesConfig.setDefaults(YamlConfiguration.loadConfiguration(
+                    new InputStreamReader(defaults, StandardCharsets.UTF_8)));
+        }
     }
 
     private void saveLocaleResource(String locale) {

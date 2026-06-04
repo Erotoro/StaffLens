@@ -29,10 +29,31 @@ public class MessageUtil {
     }
 
     public static Component auditEntry(AuditEntry entry, String line) {
-        Component hover = entry.details() != null && !entry.details().isBlank()
-                ? Component.text("Full command/details:\n" + entry.details())
-                : Component.text("No extra details.");
-        return parse(line).hoverEvent(HoverEvent.showText(hover));
+        StringBuilder hover = new StringBuilder();
+        if (entry.details() != null && !entry.details().isBlank()) {
+            hover.append("Details: ").append(entry.details());
+        } else {
+            hover.append("No extra details.");
+        }
+        if (entry.hasLocation()) {
+            hover.append("\nLocation: ").append(entry.world())
+                    .append(" ").append(entry.x()).append(", ").append(entry.y()).append(", ").append(entry.z());
+        }
+        if (entry.serverName() != null && !entry.serverName().isBlank()) {
+            hover.append("\nServer: ").append(entry.serverName());
+        }
+        if (entry.ip() != null && !entry.ip().isBlank()) {
+            hover.append("\nIP: ").append(entry.ip());
+        }
+        if (entry.flagged()) {
+            hover.append("\n⚠ Flagged as anomalous");
+        }
+        return parse(line).hoverEvent(HoverEvent.showText(Component.text(hover.toString())));
+    }
+
+    /** Prefixes flagged entries with a warning marker for at-a-glance scanning. */
+    public static String flagPrefix(AuditEntry entry) {
+        return entry.flagged() ? "<red>⚠ </red>" : "";
     }
 
     public static Component pageControls(String baseCommand, int page, int totalPages) {

@@ -3,8 +3,10 @@ package dev.stafflens.integrations.impl;
 import dev.stafflens.StaffLensPlugin;
 import dev.stafflens.integrations.BaseIntegration;
 import dev.stafflens.model.ActionType;
-import dev.stafflens.model.AuditEntry;
+import dev.stafflens.tracking.CommandMappingService;
+import dev.stafflens.tracking.ParsedCommand;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.server.ServerCommandEvent;
@@ -28,25 +30,28 @@ public class VanillaIntegration extends BaseIntegration {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onGamemode(PlayerGameModeChangeEvent event) {
-        if (event.getPlayer().hasPermission("stafflens.admin")) { 
-            auditService.log(new AuditEntry(
-                    event.getPlayer().getUniqueId(),
-                    event.getPlayer().getName(),
-                    ActionType.GAMEMODE_CHANGE,
-                    event.getPlayer().getName(),
-                    "Self Change",
-                    "To " + event.getNewGameMode().name(),
-                    System.currentTimeMillis()
-            ));
+        Player player = event.getPlayer();
+        if (shouldTrack(player)) {
+            auditService.log(player, player.getName(), ActionType.GAMEMODE_CHANGE, player.getName(),
+                    "Self Change", "To " + event.getNewGameMode().name());
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent event) {
-        if (!event.getPlayer().hasPermission("stafflens.admin")) {
+        if (!shouldTrack(event.getPlayer())) {
             return;
         }
         logCommand(event.getPlayer(), event.getPlayer().getName(), event.getMessage());
+    }
+
+    private boolean shouldTrack(Player player) {
+        String mode = plugin.getConfig().getString("tracking.mode", "permission").toLowerCase(Locale.ROOT);
+        if (mode.equals("all")) {
+            return true;
+        }
+        String permission = plugin.getConfig().getString("tracking.permission", "stafflens.admin");
+        return player.hasPermission(permission);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -199,7 +204,8 @@ public class VanillaIntegration extends BaseIntegration {
         }
 
         if (type == null) {
-            return null;
+            CommandMappingService mappingService = plugin.getCommandMappingService();
+            return mappingService != null ? mappingService.match(parts, msg, actorName) : null;
         }
 
         return new ParsedCommand(type, target, msg);
@@ -312,8 +318,5 @@ public class VanillaIntegration extends BaseIntegration {
 
     private boolean isFalsy(String value) {
         return isAny(value, "off", "disable", "disabled", "false", "0");
-    }
-
-    private record ParsedCommand(ActionType type, String target, String details) {
     }
 }

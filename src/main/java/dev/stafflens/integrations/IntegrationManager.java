@@ -24,6 +24,9 @@ public class IntegrationManager {
         registerIfEnabled("Essentials", new EssentialsIntegration(plugin));
         registerIfEnabled("CMI", new CMIIntegration(plugin));
         registerIfEnabled("LuckPerms", new LuckPermsIntegration(plugin));
+        registerIfEnabled("LibsDisguises", new LibsDisguisesIntegration(plugin));
+        // SuperVanish and PremiumVanish share the same API, so either one enables this integration.
+        registerIfAnyPresent("SuperVanish", new SuperVanishIntegration(plugin), "SuperVanish", "PremiumVanish");
         
         // Vanilla is always enabled, but we check config
         if (plugin.getConfig().getBoolean("integrations.Vanilla", true)) {
@@ -52,6 +55,20 @@ public class IntegrationManager {
             integration.register();
             integrations.add(integration);
             plugin.getLogger().info("Integration loaded: " + pluginName);
+        }
+    }
+
+    private void registerIfAnyPresent(String configKey, BaseIntegration integration, String... pluginNames) {
+        if (!plugin.getConfig().getBoolean("integrations." + configKey, true)) {
+            return;
+        }
+        for (String pluginName : pluginNames) {
+            if (Bukkit.getPluginManager().isPluginEnabled(pluginName)) {
+                integration.register();
+                integrations.add(integration);
+                plugin.getLogger().info("Integration loaded: " + configKey);
+                return;
+            }
         }
     }
 }
